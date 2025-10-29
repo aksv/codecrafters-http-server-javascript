@@ -13,6 +13,10 @@ function makeResponse(version, code, reasonPhrase) {
   return `HTTP/${version} ${code} ${reasonPhrase}${CRLF}${CRLF}`;
 }
 
+function getStatusLine(version, code, reasonPhrase) {
+  return `HTTP/${version} ${code} ${reasonPhrase}`;
+}
+
 let clientIdsCounter = 0;
 const buffers = new Map();
 
@@ -54,6 +58,19 @@ const server = net.createServer((socket) => {
     let response;
     if (target === '/') {
       response = makeResponse(protocolVersion, 200, 'OK');
+    } else if (target.startsWith('/echo')) {
+      const responseBody = target.slice(6);
+      const contentLength = Buffer.byteLength(responseBody, 'utf-8');
+      const responseMsg = [];
+      responseMsg.push(getStatusLine(protocolVersion, 200, 'OK'));
+      responseMsg.push(CRLF);
+      responseMsg.push('Content-Type: text/plain');
+      responseMsg.push(CRLF);
+      responseMsg.push(`Content-Length: ${contentLength}`);
+      responseMsg.push(CRLF);
+      responseMsg.push(CRLF);
+      responseMsg.push(responseBody);
+      response = responseMsg.join('');
     } else {
       response = makeResponse(protocolVersion, 404, 'Not Found');
     }
