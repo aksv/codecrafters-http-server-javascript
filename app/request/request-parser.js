@@ -13,7 +13,7 @@ class RequestParser {
     this.#buffer = Buffer.alloc(0);
   }
 
-  isHeaderPasred() {
+  isHeaderParsed() {
     return this.#isHeaderParsed;
   }
 
@@ -27,7 +27,6 @@ class RequestParser {
     if (separatorIdx === -1) {
       return;
     }
-    console.debug('Get all data start parse');
     // Parse start line
     const crlfIdx = this.#buffer.indexOf(CRLF);
     const startLineBuff = this.#buffer.subarray(0, crlfIdx);

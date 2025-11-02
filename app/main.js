@@ -1,127 +1,54 @@
 const net = require("net");
 const { Buffer } = require('node:buffer');
 
-// TODO: move to consts
-const CRLF = '\r\n';
-const SEPARATOR = '\r\n\r\n';
-const MAX_START_LINE = 8 * 1024;
+const Router = require('./router');
+const { files } = require('./handlers');
+const { RequestParser } = require('./request');
+const Response = require('./response');
+const { getComandArguments } = require('./utils');
 
-// TODO: move to config
-const protocolVersion = '1.1';
 
-// TODO: move to utils module
-function makeResponse(version, code, reasonPhrase) {
-  return `HTTP/${version} ${code} ${reasonPhrase}${CRLF}${CRLF}`;
-}
-
-function getStatusLine(version, code, reasonPhrase) {
-  return `HTTP/${version} ${code} ${reasonPhrase}`;
-}
-
-function userAgentRouteHandler() {
-
-}
 
 let clientIdsCounter = 0;
 const parsers = new Map();
 
-class ParsedRequest {
-  #method
-  #target
-  #version
-  #headers = new Map()
+const cmdArguments = getComandArguments();
 
-  get method() {
-    return this.#method;
-  }
+const fileHandler = files.fileHandlerWithPath(cmdArguments.get('directory'));
 
-  set method(method) {
-    this.#method = method;
-  }
+const router = new Router();
+router.get('/', (_, res) => {
+  res.writeStatusLine(200, 'OK');
+  res.endHeaders();
+});
 
-  get target() {
-    return this.#target;
-  }
+router.get('/echo/:str', (req, res) => {
+  const respBody = req.params.str;
+  const contentLength = Buffer.byteLength(respBody, 'utf-8');
+  res.writeStatusLine(200, 'OK');
+  res.writeHeader('Content-Type', 'text/plain');
+  res.writeHeader('Content-Length', contentLength);
+  res.endHeaders();
+  res.writeContent(respBody);
+});
 
-  set target(target) {
-    this.#target = target;
-  }
+router.get('/user-agent', (req, res) => {
+  const respBody = req.getHeader('user-agent');
+  const contentLength = Buffer.byteLength(respBody, 'ascii');
+  res.writeStatusLine(200, 'OK');
+  res.writeHeader('Content-Type', 'text/plain');
+  res.writeHeader('Content-Length', contentLength);
+  res.endHeaders();
+  res.writeContent(respBody);
+});
 
-  get version() {
-    return this.#version;
-  }
-
-  set version(version) {
-    this.#version = version;
-  }
-
-  setHeader(header, value) {
-    this.#headers.set(header, value);
-  }
-
-  getHeader(header) {
-    return this.#headers.get(header);
-  }
-
-  isHeaderExists(header) {
-    return this.#headers.has(header);
-  }
-}
-
-class RequestParser {
-  #buffer;
-  #isHeaderParsed = false;
-  #parsedRequest = new ParsedRequest();
-
-  constructor() {
-    this.#buffer = Buffer.alloc(0);
-  }
-
-  isHeaderPasred() {
-    return this.#isHeaderParsed;
-  }
-
-  get parsedHeader() {
-    return this.#parsedRequest;
-  }
-
-  parseData(chunk) {
-    this.#buffer = Buffer.concat([this.#buffer, chunk]);
-    const separatorIdx = this.#buffer.indexOf(SEPARATOR);
-    if (separatorIdx === -1) {
-      return;
-    }
-    // Parse start line
-    const crlfIdx = this.#buffer.indexOf(CRLF);
-    const startLineBuff = this.#buffer.subarray(0, crlfIdx);
-    const startLine = startLineBuff.toString('ascii');
-    const firstSpaceIdx = startLine.indexOf(' ');
-    const secondSpaceIdx = startLine.indexOf(' ', firstSpaceIdx + 1);
-    if (firstSpaceIdx < 1 || secondSpaceIdx === -1) {
-      throw new Error('Bad start-line');
-    }
-    this.#parsedRequest.method = startLine.slice(0, firstSpaceIdx);
-    this.#parsedRequest.target = startLine.slice(firstSpaceIdx + 1, secondSpaceIdx);
-    this.#parsedRequest.version = startLine.slice(secondSpaceIdx + 1);
-
-    // parse headers
-    const headersBuff = this.#buffer.subarray(crlfIdx + 1, separatorIdx);
-    for (const line of headersBuff.toString('ascii').split(CRLF)) {
-      if (!line) {
-        continue;
-      }
-      const [name, value] = line.split(/:(.*)/).map(val => val.trim());
-      if (name && value) {
-        this.#parsedRequest.setHeader(name.toLowerCase(), value);
-      }
-    }
-    this.#isHeaderParsed = true;
-  }
-}
+router.get('/files/:filename', async (req, res) => {
+  await fileHandler(req, res);
+});
 
 const server = net.createServer((socket) => {
   const clientId = ++clientIdsCounter;
-  socket.on('data', (chunk) => {
+  socket.on('data', async (chunk) => {
     let parser;
     if (parsers.has(clientId)) {
       parser = parsers.get(clientId);
@@ -130,44 +57,13 @@ const server = net.createServer((socket) => {
       parsers.set(clientId, parser);
     }
     parser.parseData(chunk);
-    if (!parser.isHeaderPasred()) {
+    if (!parser.isHeaderParsed()) {
       return;
     }
     const parsed = parser.parsedHeader;
-    let response;
-    if (parsed.target === '/') {
-      response = makeResponse(protocolVersion, 200, 'OK');
-    } else if (parsed.target.startsWith('/echo')) {
-      const responseBody = parsed.target.slice(6);
-      const contentLength = Buffer.byteLength(responseBody, 'utf-8');
-      const responseMsg = [];
-      responseMsg.push(getStatusLine(protocolVersion, 200, 'OK'));
-      responseMsg.push(CRLF);
-      responseMsg.push('Content-Type: text/plain');
-      responseMsg.push(CRLF);
-      responseMsg.push(`Content-Length: ${contentLength}`);
-      responseMsg.push(CRLF);
-      responseMsg.push(CRLF);
-      responseMsg.push(responseBody);
-      response = responseMsg.join('');
-    } else if (parsed.target.startsWith('/user-agent')) {
-      const userAgent = parsed.getHeader('user-agent');
-      const contentLength = Buffer.byteLength(userAgent, 'ascii');
-      const responseMsg = [];
-      responseMsg.push(getStatusLine(protocolVersion, 200, 'OK'));
-      responseMsg.push(CRLF);
-      responseMsg.push('Content-Type: text/plain');
-      responseMsg.push(CRLF);
-      responseMsg.push(`Content-Length: ${contentLength}`);
-      responseMsg.push(CRLF);
-      responseMsg.push(CRLF);
-      responseMsg.push(userAgent);
-      response = responseMsg.join('');
-    } else {
-      response = makeResponse(protocolVersion, 404, 'Not Found');
-    }
+    const response = new Response(socket);
+    await router.handle(parsed, response);
     parsers.delete(clientId);
-    socket.write(response);
     socket.end();
   });
   socket.on("close", () => {

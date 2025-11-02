@@ -1,6 +1,5 @@
 const { Buffer } = require('node:buffer');
 const RequestParser = require('./request-parser');
-const ParsedRequest = require('./parsed-request');
 
 describe('RequestParser', () => {
   it('should parse simple HTTP request', () => {
@@ -20,7 +19,7 @@ describe('RequestParser', () => {
       }
       parser.parseData(chunk);
     }
-    expect(parser.isHeaderPasred()).toBe(true);
+    expect(parser.isHeaderParsed()).toBe(true);
     const parsedRequest = parser.parsedHeader;
     expect(parsedRequest.method).toBe('GET');
     expect(parsedRequest.target).toBe('/api/method');
