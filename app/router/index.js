@@ -43,11 +43,19 @@ class Router {
     return params;
   }
 
-  get(path, handler) {
-    if (!this.#handlers.has('GET')) {
-      this.#handlers.set('GET', []);
+  #addHandler(method, path, handler) {
+    if (!this.#handlers.has(method)) {
+      this.#handlers.set(method, []);
     }
-    this.#handlers.get('GET').push([...this.#parseUrlPattern(path), handler]);
+    this.#handlers.get(method).push([...this.#parseUrlPattern(path), handler]);
+  }
+
+  get(path, handler) {
+    this.#addHandler('GET', path, handler);
+  }
+
+  post(path, handler) {
+    this.#addHandler('POST', path, handler);
   }
 
   async handle(request, response) {

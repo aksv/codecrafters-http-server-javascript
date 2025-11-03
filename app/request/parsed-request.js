@@ -3,6 +3,7 @@ class ParsedRequest {
   #target
   #version
   #headers = new Map()
+  #body
 
   get method() {
     return this.#method;
@@ -38,6 +39,14 @@ class ParsedRequest {
 
   isHeaderExists(header) {
     return this.#headers.has(header);
+  }
+
+  set body(body) {
+    this.#body = body;
+  }
+
+  get body() {
+    return this.#body;
   }
 }
 

@@ -18,7 +18,8 @@ function translateError(error) {
 }
 
 async function fileHandler(parsedRequest, targetDir, response) {
-  const fileName = parsedRequest.target.slice(7);
+  //const fileName = parsedRequest.target.slice(7);
+  const fileName = parsedRequest.params.filename;
   const filePath = path.join(targetDir, fileName);
   try {
     const [err, fileSize] = await getFileSize(filePath);

@@ -2,7 +2,7 @@ const net = require("net");
 const { Buffer } = require('node:buffer');
 
 const Router = require('./router');
-const { files } = require('./handlers');
+const { files, saveFileHandleWithPath } = require('./handlers');
 const { RequestParser } = require('./request');
 const Response = require('./response');
 const { getComandArguments } = require('./utils');
@@ -15,6 +15,7 @@ const parsers = new Map();
 const cmdArguments = getComandArguments();
 
 const fileHandler = files.fileHandlerWithPath(cmdArguments.get('directory'));
+const saveFileHandler = saveFileHandleWithPath(cmdArguments.get('directory'));
 
 const router = new Router();
 router.get('/', (_, res) => {
@@ -46,6 +47,10 @@ router.get('/files/:filename', async (req, res) => {
   await fileHandler(req, res);
 });
 
+router.post('/files/:filename', async (req, res) => {
+  await saveFileHandler(req, res);
+});
+
 const server = net.createServer((socket) => {
   const clientId = ++clientIdsCounter;
   socket.on('data', async (chunk) => {
@@ -57,7 +62,7 @@ const server = net.createServer((socket) => {
       parsers.set(clientId, parser);
     }
     parser.parseData(chunk);
-    if (!parser.isHeaderParsed()) {
+    if (!parser.isRequestParsed()) {
       return;
     }
     const parsed = parser.parsedHeader;
