@@ -1,6 +1,8 @@
 const { stat, open } = require('node:fs/promises');
 const path = require('node:path');
 
+const fileHandlerWithPath = require('./file-hanlder-with-path');
+
 async function getFileSize(path) {
   try {
     const fileStat = await stat(path);
@@ -18,7 +20,6 @@ function translateError(error) {
 }
 
 async function fileHandler(parsedRequest, targetDir, response) {
-  //const fileName = parsedRequest.target.slice(7);
   const fileName = parsedRequest.params.filename;
   const filePath = path.join(targetDir, fileName);
   try {
@@ -42,12 +43,4 @@ async function fileHandler(parsedRequest, targetDir, response) {
   }
 }
 
-function fileHandlerWithPath(targetDir) {
-  return (request, response) => {
-    return fileHandler(request, targetDir, response);
-  };
-}
-
-module.exports = {
-  fileHandlerWithPath,
-};
+module.exports = fileHandlerWithPath(fileHandler);

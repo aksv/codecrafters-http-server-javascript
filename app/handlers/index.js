@@ -1,4 +1,4 @@
 module.exports = {
-  files: require('./file-handler'),
+  getFileHandleWithPath: require('./file-handler'),
   saveFileHandleWithPath: require('./create-file-handler'),
 };

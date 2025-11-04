@@ -2,7 +2,7 @@ const net = require("net");
 const { Buffer } = require('node:buffer');
 
 const Router = require('./router');
-const { files, saveFileHandleWithPath } = require('./handlers');
+const { getFileHandleWithPath, saveFileHandleWithPath } = require('./handlers');
 const { RequestParser } = require('./request');
 const Response = require('./response');
 const { getComandArguments } = require('./utils');
@@ -14,7 +14,7 @@ const parsers = new Map();
 
 const cmdArguments = getComandArguments();
 
-const fileHandler = files.fileHandlerWithPath(cmdArguments.get('directory'));
+const fileHandler = getFileHandleWithPath(cmdArguments.get('directory'));
 const saveFileHandler = saveFileHandleWithPath(cmdArguments.get('directory'));
 
 const router = new Router();
