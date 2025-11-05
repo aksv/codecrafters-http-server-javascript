@@ -12,7 +12,7 @@ const { getComandArguments } = require('./utils');
 let clientIdsCounter = 0;
 const parsers = new Map();
 
-const cmdArguments = getComandArguments(['directory']);
+const cmdArguments = getComandArguments(['directory'], { directory: '/tmp/' });
 
 const fileHandler = getFileHandleWithPath(cmdArguments.get('directory'));
 const saveFileHandler = saveFileHandleWithPath(cmdArguments.get('directory'));
