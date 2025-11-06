@@ -1,12 +1,30 @@
-const { pipeline } = require('node:stream/promises');
+const { Writable } = require('node:stream');
 
 const CRLF = '\r\n';
 const protocolVersion = '1.1';
 
-class Response {
+class Response extends Writable {
   #socket
   constructor(socket) {
+    super();
     this.#socket = socket;
+  }
+
+  _write(chunk, encoding, callback) {
+    this.#socket.write(chunk, encoding, callback);
+  }
+
+  _writev(chunks, callback) {
+    const buffers = chunks.map(({ chunk }) => chunk);
+    this.#socket.write(Buffer.concat(buffers), callback);
+  }
+
+  _final(callback) {
+    callback();
+  }
+
+  _destroy(err, callback) {
+    callback(err);
   }
 
   writeStatusLine(code, reason, version = protocolVersion) {
@@ -23,10 +41,6 @@ class Response {
 
   writeContent(content) {
     this.#socket.write(content);
-  }
-
-  async sendFileStream(fileHandle) {
-    await pipeline(fileHandle.createReadStream(), this.#socket);
   }
 }
 

@@ -1,5 +1,6 @@
 const { stat, open } = require('node:fs/promises');
 const path = require('node:path');
+const { pipeline } = require('node:stream/promises');
 
 const fileHandlerWithPath = require('./file-hanlder-with-path');
 
@@ -35,7 +36,7 @@ async function fileHandler(parsedRequest, targetDir, response) {
     response.writeHeader('Content-Length', fileSize);
     response.endHeaders();
     const fileHandle = await open(filePath);
-    await response.sendFileStream(fileHandle);
+    await pipeline(fileHandle.createReadStream(), response);
   } catch (err) {
     const [errCode, errString] = translateError(err);
     response.writeStatusLine(errCode, errString);
