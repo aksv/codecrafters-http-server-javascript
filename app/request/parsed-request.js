@@ -1,9 +1,13 @@
+const { PassThrough, Transform } = require('node:stream');
+
 class ParsedRequest {
   #method
   #target
   #version
   #headers = new Map()
   #body
+  #bodyStream = new PassThrough();
+  #bodyBytesRead = 0;
 
   get method() {
     return this.#method;
@@ -39,6 +43,24 @@ class ParsedRequest {
 
   isHeaderExists(header) {
     return this.#headers.has(header);
+  }
+
+  writeBody(chunk) {
+    const contentLength = parseInt(this.getHeader('content-length') || '0');
+    if (this.#bodyBytesRead >= contentLength) {
+      throw new Error('No more data expected');
+    }
+    this.#bodyBytesRead += chunk.length;
+    this.#bodyStream.write(chunk);
+    if (this.#bodyBytesRead === contentLength) {
+      this.#bodyStream.end();
+      return false;
+    }
+    return true;
+  }
+
+  get bodyStream() {
+    return this.#bodyStream;
   }
 
   set body(body) {

@@ -62,7 +62,7 @@ const server = net.createServer((socket) => {
       parsers.set(clientId, parser);
     }
     parser.parseData(chunk);
-    if (!parser.isRequestParsed()) {
+    if (!parser.isHeaderParsed()) {
       return;
     }
     const parsed = parser.parsedHeader;

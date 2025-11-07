@@ -71,16 +71,23 @@ class RequestParser {
 
   parseData(chunk) {
     this.#buffer = Buffer.concat([this.#buffer, chunk]);
+    let separatorIdx;
     if (!this.#isHeaderParsed) {
-      const separatorIdx = this.#buffer.indexOf(SEPARATOR);
+      separatorIdx = this.#buffer.indexOf(SEPARATOR);
       if (separatorIdx === -1) {
         return;
       }
       this.#parseHeader();
-      this.#buffer = this.#buffer.subarray(separatorIdx + 4);
+      const remaining = this.#buffer.subarray(separatorIdx + 4);
+      if (remaining.length > 0) {
+        this.#parsedRequest.writeBody(remaining);
+      }
+    } else {
+      const expectsMore = this.#parsedRequest.writeBody(chunk);
+      if (!expectsMore) {
+        this.#isRequestParsed = true;
+      }
     }
-    this.#parseBody();
-
   }
 }
 

@@ -1,5 +1,6 @@
 const { open } = require('node:fs/promises');
 const path = require('node:path');
+const { pipeline } = require('node:stream/promises');
 
 const fileHandlerWithPath = require('./file-hanlder-with-path');
 
@@ -15,7 +16,7 @@ async function createFileHandler(request, targetDir, response) {
   const filePath = path.join(targetDir, fileName);
   try {
     const fh = await open(filePath, 'w');
-    await fh.writeFile(request.body);
+    await pipeline(request.bodyStream, fh.createWriteStream());
     response.writeStatusLine(201, 'Created');
     response.endHeaders();
   } catch (error) {
