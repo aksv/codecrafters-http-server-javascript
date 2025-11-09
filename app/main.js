@@ -28,7 +28,7 @@ router.get('/echo/:str', (req, res) => {
   const contentLength = Buffer.byteLength(respBody, 'utf-8');
   const acceptEncoding = req.getHeader('accept-encoding');
   res.writeStatusLine(200, 'OK');
-  if (acceptEncoding === 'gzip') {
+  if (acceptEncoding && acceptEncoding.split(',').some((enc) => enc.trim() === 'gzip')) {
     res.writeHeader('Content-Encoding', 'gzip');
   }
   res.writeHeader('Content-Type', 'text/plain');
