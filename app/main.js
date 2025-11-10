@@ -2,7 +2,7 @@ const net = require("net");
 const { Buffer } = require('node:buffer');
 
 const Router = require('./router');
-const { getFileHandleWithPath, saveFileHandleWithPath } = require('./handlers');
+const { getFileHandleWithPath, saveFileHandleWithPath, echoHandler } = require('./handlers');
 const { RequestParser } = require('./request');
 const Response = require('./response');
 const { getComandArguments } = require('./utils');
@@ -23,18 +23,8 @@ router.get('/', (_, res) => {
   res.endHeaders();
 });
 
-router.get('/echo/:str', (req, res) => {
-  const respBody = req.params.str;
-  const contentLength = Buffer.byteLength(respBody, 'utf-8');
-  const acceptEncoding = req.getHeader('accept-encoding');
-  res.writeStatusLine(200, 'OK');
-  if (acceptEncoding && acceptEncoding.split(',').some((enc) => enc.trim() === 'gzip')) {
-    res.writeHeader('Content-Encoding', 'gzip');
-  }
-  res.writeHeader('Content-Type', 'text/plain');
-  res.writeHeader('Content-Length', contentLength);
-  res.endHeaders();
-  res.writeContent(respBody);
+router.get('/echo/:str', async (req, res) => {
+  await echoHandler(req, res);
 });
 
 router.get('/user-agent', (req, res) => {
