@@ -62,8 +62,14 @@ const server = net.createServer((socket) => {
     const parsed = parser.parsedHeader;
     const response = new Response(socket);
     await router.handle(parsed, response);
+    // Request handled so delete old parser, it will be replaced
+    // with new one next request
+    // but keep socket open
     parsers.delete(clientId);
-    socket.end();
+    const connectionHeader = parsed.getHeader('connection');
+    if (connectionHeader && connectionHeader === 'close') {
+      socket.destroy();
+    }
   });
   socket.on("close", () => {
     socket.end();
