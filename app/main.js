@@ -18,8 +18,11 @@ const fileHandler = getFileHandleWithPath(cmdArguments.get('directory'));
 const saveFileHandler = saveFileHandleWithPath(cmdArguments.get('directory'));
 
 const router = new Router();
-router.get('/', (_, res) => {
+router.get('/', (req, res) => {
   res.writeStatusLine(200, 'OK');
+  if (req.isHeaderExists('connection') && req.getHeader('connection') === 'close') {
+    res.writeHeader('connection', 'close');
+  }
   res.endHeaders();
 });
 
@@ -68,7 +71,7 @@ const server = net.createServer((socket) => {
     parsers.delete(clientId);
     const connectionHeader = parsed.getHeader('connection');
     if (connectionHeader && connectionHeader === 'close') {
-      socket.destroy();
+      socket.end();
     }
   });
   socket.on("close", () => {
