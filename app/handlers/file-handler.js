@@ -2,6 +2,7 @@ const { stat, open } = require('node:fs/promises');
 const path = require('node:path');
 const { pipeline } = require('node:stream/promises');
 
+const { setCommonHeaders } = require('../utils');
 const fileHandlerWithPath = require('./file-hanlder-with-path');
 
 async function getFileSize(path) {
@@ -34,6 +35,7 @@ async function fileHandler(parsedRequest, targetDir, response) {
     response.writeStatusLine(200, 'OK');
     response.writeHeader('Content-Type', 'application/octet-stream');
     response.writeHeader('Content-Length', fileSize);
+    setCommonHeaders(req, res);
     response.endHeaders();
     const fileHandle = await open(filePath);
     await pipeline(fileHandle.createReadStream(), response);

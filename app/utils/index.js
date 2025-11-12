@@ -41,6 +41,13 @@ function getComandArguments(mandatoryKeys = [], defaultParams = {}) {
   return cmdArgs;
 }
 
+function setCommonHeaders(req, res) {
+  if (req.isHeaderExists('connection') && req.getHeader('connection') === 'close') {
+    res.writeHeader('connection', 'close');
+  }
+}
+
 module.exports = {
   getComandArguments,
+  setCommonHeaders,
 }

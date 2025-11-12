@@ -5,7 +5,7 @@ const Router = require('./router');
 const { getFileHandleWithPath, saveFileHandleWithPath, echoHandler } = require('./handlers');
 const { RequestParser } = require('./request');
 const Response = require('./response');
-const { getComandArguments } = require('./utils');
+const { getComandArguments, setCommonHeaders } = require('./utils');
 
 
 
@@ -20,9 +20,7 @@ const saveFileHandler = saveFileHandleWithPath(cmdArguments.get('directory'));
 const router = new Router();
 router.get('/', (req, res) => {
   res.writeStatusLine(200, 'OK');
-  if (req.isHeaderExists('connection') && req.getHeader('connection') === 'close') {
-    res.writeHeader('connection', 'close');
-  }
+  setCommonHeaders(req, res);
   res.endHeaders();
 });
 
@@ -36,6 +34,7 @@ router.get('/user-agent', (req, res) => {
   res.writeStatusLine(200, 'OK');
   res.writeHeader('Content-Type', 'text/plain');
   res.writeHeader('Content-Length', contentLength);
+  setCommonHeaders(req, res);
   res.endHeaders();
   res.writeContent(respBody);
 });

@@ -1,6 +1,8 @@
 const zlib = require('node:zlib');
 const { promisify } = require('node:util');
 
+const { setCommonHeaders } = require('../utils');
+
 const gzip = promisify(zlib.gzip);
 
 async function echoHandler(req, res) {
@@ -17,6 +19,7 @@ async function echoHandler(req, res) {
   }
   res.writeHeader('Content-Type', 'text/plain');
   res.writeHeader('Content-Length', responseBuffer.length);
+  setCommonHeaders(req, res);
   res.endHeaders();
   res.writeContent(responseBuffer);
 }

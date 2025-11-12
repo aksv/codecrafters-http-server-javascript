@@ -2,6 +2,7 @@ const { open } = require('node:fs/promises');
 const path = require('node:path');
 const { pipeline } = require('node:stream/promises');
 
+const { setCommonHeaders } = require('../utils');
 const fileHandlerWithPath = require('./file-hanlder-with-path');
 
 function translateError(error) {
@@ -18,6 +19,7 @@ async function createFileHandler(request, targetDir, response) {
     const fh = await open(filePath, 'w');
     await pipeline(request.bodyStream, fh.createWriteStream());
     response.writeStatusLine(201, 'Created');
+    setCommonHeaders(req, res);
     response.endHeaders();
   } catch (error) {
     const [errCode, errString] = translateError(error);
