@@ -35,7 +35,7 @@ async function fileHandler(parsedRequest, targetDir, response) {
     response.writeStatusLine(200, 'OK');
     response.writeHeader('Content-Type', 'application/octet-stream');
     response.writeHeader('Content-Length', fileSize);
-    setCommonHeaders(req, res);
+    setCommonHeaders(parsedRequest, response);
     response.endHeaders();
     const fileHandle = await open(filePath);
     await pipeline(fileHandle.createReadStream(), response);

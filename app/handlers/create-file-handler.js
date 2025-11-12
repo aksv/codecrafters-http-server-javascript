@@ -19,7 +19,7 @@ async function createFileHandler(request, targetDir, response) {
     const fh = await open(filePath, 'w');
     await pipeline(request.bodyStream, fh.createWriteStream());
     response.writeStatusLine(201, 'Created');
-    setCommonHeaders(req, res);
+    setCommonHeaders(request, response);
     response.endHeaders();
   } catch (error) {
     const [errCode, errString] = translateError(error);
